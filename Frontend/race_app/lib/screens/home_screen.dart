@@ -16,7 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const RaceControlScreen(),
     const ParticipantsScreen(),
-    // const TimeTrackingScreen(),
+    const TimeTrackingScreen(),
   ];
 
   @override

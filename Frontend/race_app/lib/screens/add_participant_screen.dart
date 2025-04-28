@@ -16,7 +16,6 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
   String? _selectedGender;
-  String? _selectedCategory;
 
   final List<String> _genders = ['Male', 'Female', 'Other'];
 
@@ -136,7 +135,6 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
         name: _nameController.text,
         age: _ageController.text.isNotEmpty ? int.parse(_ageController.text) : null,
         gender: _selectedGender,
-        category: _selectedCategory,
       );
       
       provider.addParticipant(participant);

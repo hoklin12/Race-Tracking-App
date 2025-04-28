@@ -1,16 +1,17 @@
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:race_app/models/race.dart';
+import 'package:race_app/providers/race_provider.dart';
 import 'package:race_app/screens/widgets/race_action_buttons.dart';
 
 class RaceStatusWidget extends StatelessWidget {
-  final Race race;
   final VoidCallback? onStart;
   final VoidCallback? onFinish;
-  final VoidCallback? onPause; // New callback for Pause Race
+  final VoidCallback? onPause;
 
   const RaceStatusWidget({
     super.key,
-    required this.race,
     this.onStart,
     this.onFinish,
     this.onPause,
@@ -18,6 +19,9 @@ class RaceStatusWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final raceProvider = Provider.of<RaceProvider>(context);
+    final race = raceProvider.race;
+
     Color statusColor;
     IconData statusIcon;
 
@@ -79,7 +83,7 @@ class RaceStatusWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                _buildTimeInfo(context),
+                _buildTimeInfo(context, race),
               ],
             ),
           ),
@@ -110,9 +114,9 @@ class RaceStatusWidget extends StatelessWidget {
     return '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
   }
 
-  Widget _buildTimeInfo(BuildContext context) {
+  Widget _buildTimeInfo(BuildContext context, Race race) {
     if (race.status == RaceStatus.notStarted) {
-      return const SizedBox.shrink(); // Hide time when not started
+      return const SizedBox.shrink();
     } else if (race.status == RaceStatus.ongoing && race.startTime != null) {
       return Row(
         mainAxisSize: MainAxisSize.min,

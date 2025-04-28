@@ -33,7 +33,6 @@ class _EditParticipantScreenState extends State<EditParticipantScreen> {
       text: widget.participant.age != null ? widget.participant.age.toString() : '',
     );
     _selectedGender = widget.participant.gender;
-    _selectedCategory = widget.participant.category;
   }
 
   @override
@@ -151,7 +150,6 @@ class _EditParticipantScreenState extends State<EditParticipantScreen> {
         name: _nameController.text,
         age: _ageController.text.isNotEmpty ? int.parse(_ageController.text) : null,
         gender: _selectedGender,
-        category: _selectedCategory,
       );
       
       provider.updateParticipant(updatedParticipant);

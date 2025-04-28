@@ -4,7 +4,6 @@ class Participant {
   final String name;
   final int? age;
   final String? gender;
-  final String? category;
   final Map<String, DateTime>? segmentTimes;
   final DateTime? overallTime;
 
@@ -14,7 +13,6 @@ class Participant {
     required this.name,
     this.age,
     this.gender,
-    this.category,
     this.segmentTimes,
     this.overallTime,
   });
@@ -25,7 +23,6 @@ class Participant {
     String? name,
     int? age,
     String? gender,
-    String? category,
     Map<String, DateTime>? segmentTimes,
     DateTime? overallTime,
   }) {
@@ -35,7 +32,6 @@ class Participant {
       name: name ?? this.name,
       age: age ?? this.age,
       gender: gender ?? this.gender,
-      category: category ?? this.category,
       segmentTimes: segmentTimes ?? this.segmentTimes,
       overallTime: overallTime ?? this.overallTime,
     );
@@ -48,7 +44,6 @@ class Participant {
       'name': name,
       'age': age,
       'gender': gender,
-      'category': category,
       'segmentTimes': segmentTimes?.map((key, value) => MapEntry(key, value.toIso8601String())),
       'overallTime': overallTime?.toIso8601String(),
     };
@@ -61,7 +56,6 @@ class Participant {
       name: map['name'],
       age: map['age'],
       gender: map['gender'],
-      category: map['category'],
       segmentTimes: map['segmentTimes'] != null
           ? (map['segmentTimes'] as Map<String, dynamic>)
               .map((key, value) => MapEntry(key, DateTime.parse(value)))

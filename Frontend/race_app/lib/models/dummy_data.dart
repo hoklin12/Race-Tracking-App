@@ -13,7 +13,6 @@ final dummyRace = Race(
       name: 'Alice Smith',
       age: 28,
       gender: 'Female',
-      category: 'Elite',
       segmentTimes: {
         'swim': DateTime(2025, 4, 24, 9, 20), // Swim took 20 minutes
         'cycle': DateTime(2025, 4, 24, 9, 50), // Cycle took 30 minutes
@@ -27,7 +26,6 @@ final dummyRace = Race(
       name: 'Bob Johnson',
       age: 32,
       gender: 'Male',
-      category: 'Elite',
       segmentTimes: {
         'swim': DateTime(2025, 4, 24, 9, 18),
         'cycle': DateTime(2025, 4, 24, 9, 45),
@@ -41,7 +39,6 @@ final dummyRace = Race(
       name: 'Charlie Brown',
       age: 25,
       gender: 'Male',
-      category: 'Amateur',
       segmentTimes: {
         'swim': DateTime(2025, 4, 24, 9, 22),
         'cycle': DateTime(2025, 4, 24, 9, 55),
@@ -55,7 +52,6 @@ final dummyRace = Race(
       name: 'Diana Prince',
       age: 30,
       gender: 'Female',
-      category: 'Elite',
       segmentTimes: {
         'swim': DateTime(2025, 4, 24, 9, 19),
         'cycle': DateTime(2025, 4, 24, 9, 48),
@@ -69,7 +65,6 @@ final dummyRace = Race(
       name: 'Eve Adams',
       age: 27,
       gender: 'Female',
-      category: 'Amateur',
       overallTime: null, // Did not finish
     ),
   ],

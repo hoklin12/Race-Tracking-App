@@ -1,7 +1,11 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:race_app/models/participant.dart';
+import 'package:race_app/models/race.dart';
 import 'package:race_app/providers/participants_provider.dart';
+import 'package:race_app/providers/race_provider.dart';
 import 'package:race_app/screens/add_participant_screen.dart';
 import 'package:race_app/screens/edit_participant_screen.dart';
 
@@ -17,64 +21,85 @@ class _ParticipantsScreenState extends State<ParticipantsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Participants'),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search by name, BIB, or category...',
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
+    return Consumer<RaceProvider>(
+      builder: (context, raceProvider, _) {
+        final isRaceStarted = raceProvider.race.status != RaceStatus.notStarted;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Participants'),
           ),
-          Expanded(
-            child: Consumer<ParticipantsProvider>(
-              builder: (context, provider, _) {
-                final participants = provider.participants.where((participant) {
-                  if (_searchQuery.isEmpty) return true;
-                  
-                  final query = _searchQuery.toLowerCase();
-                  return participant.name.toLowerCase().contains(query) ||
-                      participant.bib.toString().contains(query) ||
-                      (participant.category?.toLowerCase().contains(query) ?? false);
-                }).toList();
+          body: Column(
+            children: [
+              if (isRaceStarted)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    "Can't add participant when race is started",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    hintText: 'Search by name, BIB, or category...',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                ),
+              ),
+              Expanded(
+                child: Consumer<ParticipantsProvider>(
+                  builder: (context, provider, _) {
+                    final participants = provider.participants.where((participant) {
+                      if (_searchQuery.isEmpty) return true;
+                      
+                      final query = _searchQuery.toLowerCase();
+                      return participant.name.toLowerCase().contains(query) ||
+                          participant.bib.toString().contains(query);
+                    }).toList();
 
-                if (participants.isEmpty) {
-                  return const Center(
-                    child: Text('No participants found'),
-                  );
-                }
+                    if (participants.isEmpty) {
+                      return const Center(
+                        child: Text('No participants found'),
+                      );
+                    }
 
-                return ListView.builder(
-                  itemCount: participants.length,
-                  itemBuilder: (context, index) {
-                    final participant = participants[index];
-                    return ParticipantListItem(
-                      participant: participant,
-                      onEdit: () => _editParticipant(context, participant),
-                      onDelete: () => _deleteParticipant(context, participant),
+                    return ListView.builder(
+                      itemCount: participants.length,
+                      itemBuilder: (context, index) {
+                        final participant = participants[index];
+                        return ParticipantListItem(
+                          participant: participant,
+                          onEdit: isRaceStarted
+                              ? () {} // Disable edit during race
+                              : () => _editParticipant(context, participant),
+                          onDelete: isRaceStarted
+                              ? () {} // Disable delete during race
+                              : () => _deleteParticipant(context, participant),
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _addParticipant(context),
-        child: const Icon(Icons.add),
-      ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: isRaceStarted ? null : () => _addParticipant(context),
+            child: const Icon(Icons.add),
+          ),
+        );
+      },
     );
   }
 
@@ -146,7 +171,6 @@ class ParticipantListItem extends StatelessWidget {
         subtitle: Text([
           participant.age != null ? '${participant.age} years' : null,
           participant.gender,
-          participant.category,
         ].where((item) => item != null).join(' • ')),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -165,4 +189,3 @@ class ParticipantListItem extends StatelessWidget {
     );
   }
 }
-

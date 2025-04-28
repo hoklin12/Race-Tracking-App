@@ -51,7 +51,6 @@ class ExportUtils {
         participant.name,
         participant.age?.toString() ?? '',
         participant.gender ?? '',
-        participant.category ?? '',
         times['swim'] != null ? _formatDateTime(times['swim']!) : '',
         times['cycle'] != null ? _formatDateTime(times['cycle']!) : '',
         times['run'] != null ? _formatDateTime(times['run']!) : '',

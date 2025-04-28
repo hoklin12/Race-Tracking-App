@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ParticipantsProvider()),
         ChangeNotifierProvider(create: (_) => RaceProvider()),
-        // ChangeNotifierProvider(create: (_) => TimeLogsProvider()),
+        ChangeNotifierProvider(create: (_) => TimeLogsProvider()),
       ],
       child: MaterialApp(
         title: 'RaceApp',
@@ -33,3 +33,36 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import 'package:race_app/providers/participants_provider.dart';
+// import 'package:race_app/providers/race_provider.dart';
+// import 'package:race_app/providers/time_logs_provider.dart';
+// import 'package:race_app/screens/home_screen.dart';
+
+// void main() {
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MultiProvider(
+//       providers: [
+//         ChangeNotifierProvider(create: (_) => RaceProvider()),
+//         ChangeNotifierProvider(create: (_) => ParticipantsProvider()),
+//         ChangeNotifierProvider(create: (_) => TimeLogsProvider()),
+//       ],
+//       child: MaterialApp(
+//         title: 'Race Tracking App',
+//         theme: ThemeData(
+//           primarySwatch: Colors.blue,
+//           visualDensity: VisualDensity.adaptivePlatformDensity,
+//         ),
+//         home: const HomeScreen(),
+//       ),
+//     );
+//   }
+// }
