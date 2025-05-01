@@ -36,7 +36,7 @@ class RaceControlScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   LeaderboardWidget(race: race),
                   const SizedBox(height: 16),
-                  RaceReportWidget(),
+                  const RaceReportWidget(),
                 ],
               ),
             ),

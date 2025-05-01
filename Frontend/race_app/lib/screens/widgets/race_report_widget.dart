@@ -102,8 +102,8 @@ class _RaceReportWidgetState extends State<RaceReportWidget> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Icon(
                       Icons.insert_chart,
                       size: 24,

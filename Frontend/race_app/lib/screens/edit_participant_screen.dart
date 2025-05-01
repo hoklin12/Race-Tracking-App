@@ -21,7 +21,6 @@ class _EditParticipantScreenState extends State<EditParticipantScreen> {
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   String? _selectedGender;
-  String? _selectedCategory;
 
   final List<String> _genders = ['Male', 'Female', 'Other'];
   @override

@@ -88,7 +88,7 @@ class RaceStatusWidget extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         RaceActionButtons(
           race: race,
           onStart: onStart,
@@ -121,7 +121,7 @@ class RaceStatusWidget extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.play_arrow, size: 20, color: Colors.white70),
+          const Icon(Icons.play_arrow, size: 20, color: Colors.white70),
           const SizedBox(width: 8),
           Text(
             'Started: ${_formatDateTime(race.startTime!)}',
@@ -136,7 +136,7 @@ class RaceStatusWidget extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.stop, size: 20, color: Colors.white70),
+          const Icon(Icons.stop, size: 20, color: Colors.white70),
           const SizedBox(width: 8),
           Text(
             'Finished: ${_formatDateTime(race.endTime!)}',

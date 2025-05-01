@@ -19,7 +19,6 @@ class CategoryTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDisabled = onTap.toString() == '() {}';
 
     return Expanded(
       child: GestureDetector(

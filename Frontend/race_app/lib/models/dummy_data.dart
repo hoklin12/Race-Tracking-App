@@ -4,7 +4,8 @@ import 'package:race_app/models/participant.dart';
 final dummyRace = Race(
   id: 'race_2025_001',
   status: RaceStatus.finished,
-  startTime: DateTime(2025, 4, 24, 9, 0), // Race started at 9:00 AM on April 24, 2025
+  startTime:
+      DateTime(2025, 4, 24, 9, 0), // Race started at 9:00 AM on April 24, 2025
   endTime: DateTime(2025, 4, 24, 10, 45), // Race ended at 10:45 AM
   participants: [
     Participant(
@@ -16,7 +17,7 @@ final dummyRace = Race(
       segmentTimes: {
         'swim': DateTime(2025, 4, 24, 9, 20), // Swim took 20 minutes
         'cycle': DateTime(2025, 4, 24, 9, 50), // Cycle took 30 minutes
-        'run': DateTime(2025, 4, 24, 10, 15),  // Run took 25 minutes
+        'run': DateTime(2025, 4, 24, 10, 15), // Run took 25 minutes
       },
       overallTime: DateTime(2025, 4, 24, 10, 15), // Total time: 1:15:00
     ),

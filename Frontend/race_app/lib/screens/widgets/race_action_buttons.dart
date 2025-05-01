@@ -19,7 +19,7 @@ class RaceActionButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final buttonStyle = ElevatedButton.styleFrom(
       foregroundColor: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       minimumSize: const Size(0, 48),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
@@ -45,18 +45,17 @@ class RaceActionButtons extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: 230,
+            width: 198,
             child: ElevatedButton.icon(
               onPressed: onPause,
               icon: const Icon(Icons.pause),
               label: const Text('Pause Race'),
-
               style: buttonStyle,
             ),
           ),
           const SizedBox(width: 8),
           SizedBox(
-            width: 230,
+            width: 198,
             child: ElevatedButton.icon(
               onPressed: onFinish,
               icon: const Icon(Icons.stop),
