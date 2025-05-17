@@ -44,24 +44,49 @@ class Participant {
       'name': name,
       'age': age,
       'gender': gender,
-      'segmentTimes': segmentTimes?.map((key, value) => MapEntry(key, value.toIso8601String())),
+      'segmentTimes': segmentTimes
+          ?.map((key, value) => MapEntry(key, value.toIso8601String())),
       'overallTime': overallTime?.toIso8601String(),
     };
   }
 
   factory Participant.fromMap(Map<String, dynamic> map) {
-    return Participant(
-      id: map['id'],
-      bib: map['bib'],
-      name: map['name'],
-      age: map['age'],
-      gender: map['gender'],
-      segmentTimes: map['segmentTimes'] != null
-          ? (map['segmentTimes'] as Map<String, dynamic>)
-              .map((key, value) => MapEntry(key, DateTime.parse(value)))
-          : null,
-      overallTime: map['overallTime'] != null ? DateTime.parse(map['overallTime']) : null,
-    );
+    try {
+      return Participant(
+        id: map['id']?.toString() ?? '',
+        bib: _parseInt(map['bib']) ?? 0,
+        name: map['name']?.toString() ?? '',
+        age: _parseInt(map['age']),
+        gender: map['gender']?.toString(),
+        segmentTimes: map['segmentTimes'] != null
+            ? (Map<String, dynamic>.from(map['segmentTimes'] as Map)).map(
+                (key, value) => MapEntry(
+                    key, DateTime.tryParse(value.toString()) ?? DateTime.now()))
+            : null,
+        overallTime: map['overallTime'] != null
+            ? DateTime.tryParse(map['overallTime'].toString())
+            : null,
+      );
+    } catch (e) {
+      throw FormatException('Invalid participant data: $e, map: $map');
+    }
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 }
 
+// Helper class to store participant data with their segment time
+class ParticipantLeaderData {
+  final Participant participant;
+  final Duration duration;
+
+  ParticipantLeaderData({
+    required this.participant,
+    required this.duration,
+  });
+}

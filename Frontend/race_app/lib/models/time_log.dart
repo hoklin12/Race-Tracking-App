@@ -9,7 +9,6 @@ class TimeLog {
   final int bib;
   final Segment segment;
   final DateTime timestamp;
-  final String trackerId;
   final bool deleted;
 
   TimeLog({
@@ -17,7 +16,6 @@ class TimeLog {
     required this.bib,
     required this.segment,
     required this.timestamp,
-    required this.trackerId,
     this.deleted = false,
   });
 
@@ -26,7 +24,6 @@ class TimeLog {
     int? bib,
     Segment? segment,
     DateTime? timestamp,
-    String? trackerId,
     bool? deleted,
   }) {
     return TimeLog(
@@ -34,7 +31,6 @@ class TimeLog {
       bib: bib ?? this.bib,
       segment: segment ?? this.segment,
       timestamp: timestamp ?? this.timestamp,
-      trackerId: trackerId ?? this.trackerId,
       deleted: deleted ?? this.deleted,
     );
   }
@@ -45,7 +41,6 @@ class TimeLog {
       'bib': bib,
       'segment': segment.toString(),
       'timestamp': timestamp.toIso8601String(),
-      'trackerId': trackerId,
       'deleted': deleted,
     };
   }
@@ -59,7 +54,6 @@ class TimeLog {
         orElse: () => Segment.swim,
       ),
       timestamp: DateTime.parse(map['timestamp']),
-      trackerId: map['trackerId'],
       deleted: map['deleted'] ?? false,
     );
   }

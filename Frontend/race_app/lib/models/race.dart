@@ -3,6 +3,7 @@ import 'package:race_app/models/participant.dart';
 enum RaceStatus {
   notStarted,
   ongoing,
+  paused,
   finished,
 }
 
@@ -40,25 +41,33 @@ class Race {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'status': status.toString(),
+      'status': status.index,
       'startTime': startTime?.toIso8601String(),
       'endTime': endTime?.toIso8601String(),
-      'participants': participants.map((participant) => participant.toMap()).toList(),
+      'participants':
+          participants.map((participant) => participant.toMap()).toList(),
     };
   }
 
   factory Race.fromMap(Map<String, dynamic> map) {
     return Race(
-      id: map['id'],
-      status: RaceStatus.values.firstWhere(
-        (e) => e.toString() == map['status'],
-        orElse: () => RaceStatus.notStarted,
-      ),
-      startTime: map['startTime'] != null ? DateTime.parse(map['startTime']) : null,
-      endTime: map['endTime'] != null ? DateTime.parse(map['endTime']) : null,
+      id: map['id']?.toString() ?? '',
+      status: map['status'] != null
+          ? RaceStatus.values[map['status']]
+          : RaceStatus.finished,
+      startTime: map['startTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['startTime'])
+          : null,
+      endTime: map['endTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['endTime'])
+          : null,
       participants: map['participants'] != null
           ? (map['participants'] as List<dynamic>)
-              .map((participantMap) => Participant.fromMap(participantMap))
+              .asMap()
+              .entries
+              .where((entry) => entry.value != null)
+              .map((entry) => Participant.fromMap(
+                  Map<String, dynamic>.from(entry.value as Map)))
               .toList()
           : [],
     );
@@ -79,7 +88,10 @@ class Race {
     }
 
     // Sort by time (fastest first)
-    leaderboard.sort((a, b) => (a['time'] as Duration).compareTo(b['time'] as Duration));
+    leaderboard.sort(
+        (a, b) => (a['time'] as Duration).compareTo(b['time'] as Duration));
     return leaderboard;
   }
+
+  
 }

@@ -22,7 +22,7 @@ class _RaceReportWidgetState extends State<RaceReportWidget> {
   @override
   void initState() {
     super.initState();
-    _startTimerIfNeeded();
+    _startTimer();
   }
 
   @override
@@ -31,7 +31,7 @@ class _RaceReportWidgetState extends State<RaceReportWidget> {
     super.dispose();
   }
 
-  void _startTimerIfNeeded() {
+  void _startTimer() {
     final raceProvider = Provider.of<RaceProvider>(context, listen: false);
     final race = raceProvider.race;
 
@@ -79,7 +79,7 @@ class _RaceReportWidgetState extends State<RaceReportWidget> {
 
         // Restart the timer if the race status changes to ongoing
         if (race.status == RaceStatus.ongoing && (_timer == null || !_timer!.isActive)) {
-          _startTimerIfNeeded();
+          _startTimer();
         } else if (race.status != RaceStatus.ongoing) {
           _timer?.cancel();
           raceTime = _calculateRaceTime(race);
@@ -150,44 +150,6 @@ class _RaceReportWidgetState extends State<RaceReportWidget> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Export functionality not implemented')),
-                          );
-                        },
-                        icon: const Icon(Icons.download),
-                        label: const Text('Export'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[700],
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Snapshot functionality not implemented')),
-                          );
-                        },
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Snapshot'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[700],
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
                       ),
                     ),
                   ],

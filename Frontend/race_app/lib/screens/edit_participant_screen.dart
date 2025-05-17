@@ -21,15 +21,20 @@ class _EditParticipantScreenState extends State<EditParticipantScreen> {
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   String? _selectedGender;
+  bool _isSubmitting = false;
 
   final List<String> _genders = ['Male', 'Female', 'Other'];
+
   @override
   void initState() {
     super.initState();
-    _bibController = TextEditingController(text: widget.participant.bib.toString());
+    _bibController =
+        TextEditingController(text: widget.participant.bib.toString());
     _nameController = TextEditingController(text: widget.participant.name);
     _ageController = TextEditingController(
-      text: widget.participant.age != null ? widget.participant.age.toString() : '',
+      text: widget.participant.age != null
+          ? widget.participant.age.toString()
+          : '',
     );
     _selectedGender = widget.participant.gender;
   }
@@ -70,7 +75,8 @@ class _EditParticipantScreenState extends State<EditParticipantScreen> {
                   if (bib == null) {
                     return 'Please enter a valid number';
                   }
-                  final provider = Provider.of<ParticipantsProvider>(context, listen: false);
+                  final provider =
+                      Provider.of<ParticipantsProvider>(context, listen: false);
                   if (!provider.isBibNumberUnique(bib, widget.participant.id)) {
                     return 'BIB number must be unique';
                   }
@@ -130,8 +136,14 @@ class _EditParticipantScreenState extends State<EditParticipantScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _updateParticipant,
-                child: const Text('Save Changes'),
+                onPressed: _isSubmitting ? null : _updateParticipant,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save Changes'),
               ),
             ],
           ),
@@ -140,25 +152,45 @@ class _EditParticipantScreenState extends State<EditParticipantScreen> {
     );
   }
 
-  void _updateParticipant() {
+  Future<void> _updateParticipant() async {
     if (_formKey.currentState!.validate()) {
-      final provider = Provider.of<ParticipantsProvider>(context, listen: false);
-      
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      final provider =
+          Provider.of<ParticipantsProvider>(context, listen: false);
+
       final updatedParticipant = widget.participant.copyWith(
         bib: int.parse(_bibController.text),
         name: _nameController.text,
-        age: _ageController.text.isNotEmpty ? int.parse(_ageController.text) : null,
+        age: _ageController.text.isNotEmpty
+            ? int.parse(_ageController.text)
+            : null,
         gender: _selectedGender,
       );
-      
-      provider.updateParticipant(updatedParticipant);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Participant updated successfully')),
-      );
-      
-      Navigator.pop(context);
+
+      try {
+        await provider.updateParticipant(updatedParticipant);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Participant updated successfully')),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update participant: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
+      }
     }
   }
 }
-

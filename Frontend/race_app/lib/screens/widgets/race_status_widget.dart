@@ -9,12 +9,14 @@ class RaceStatusWidget extends StatelessWidget {
   final VoidCallback? onStart;
   final VoidCallback? onFinish;
   final VoidCallback? onPause;
+  final VoidCallback? onReset;
 
   const RaceStatusWidget({
     super.key,
     this.onStart,
     this.onFinish,
     this.onPause,
+    this.onReset,
   });
 
   @override
@@ -33,6 +35,10 @@ class RaceStatusWidget extends StatelessWidget {
       case RaceStatus.ongoing:
         statusColor = Colors.green;
         statusIcon = Icons.directions_run;
+        break;
+      case RaceStatus.paused:
+        statusColor = Colors.orange;
+        statusIcon = Icons.pause;
         break;
       case RaceStatus.finished:
         statusColor = Colors.blue;
@@ -94,6 +100,7 @@ class RaceStatusWidget extends StatelessWidget {
           onStart: onStart,
           onFinish: onFinish,
           onPause: onPause,
+          onReset: onReset,
         ),
       ],
     );
@@ -105,6 +112,8 @@ class RaceStatusWidget extends StatelessWidget {
         return 'Not Started';
       case RaceStatus.ongoing:
         return 'Ongoing';
+      case RaceStatus.paused:
+        return 'Paused';
       case RaceStatus.finished:
         return 'Finished';
     }

@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:race_app/models/participant.dart';
@@ -29,9 +27,23 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
         title: const Text('Time Tracking'),
       ),
       body: Consumer3<RaceProvider, ParticipantsProvider, TimeLogsProvider>(
-        builder: (context, raceProvider, participantsProvider, timeLogsProvider, _) {
+        builder:
+            (context, raceProvider, participantsProvider, timeLogsProvider, _) {
           final canTrackTime = raceProvider.canTrackTime;
-          
+
+          if (participantsProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (participantsProvider.error != null) {
+            return Center(
+              child: Text(
+                participantsProvider.error!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            );
+          }
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -150,21 +162,24 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
     final List<Participant> participantsToShow = [];
 
     for (var participant in allParticipants) {
-      final latestSegment = timeLogsProvider.getLatestSegmentForParticipant(participant.bib);
-      final hasCompleted = timeLogsProvider.hasCompletedAllSegments(participant.bib);
+      final latestSegment =
+          timeLogsProvider.getLatestSegmentForParticipant(participant.bib);
+      final hasCompleted =
+          timeLogsProvider.hasCompletedAllSegments(participant.bib);
 
-      if (hasCompleted) continue; // Skip participants who have completed all segments
+      if (hasCompleted) continue;
 
       if (_selectedSegment == Segment.swim && latestSegment == null) {
         participantsToShow.add(participant);
-      } else if (_selectedSegment == Segment.cycle && latestSegment == Segment.swim) {
+      } else if (_selectedSegment == Segment.cycle &&
+          latestSegment == Segment.swim) {
         participantsToShow.add(participant);
-      } else if (_selectedSegment == Segment.run && latestSegment == Segment.cycle) {
+      } else if (_selectedSegment == Segment.run &&
+          latestSegment == Segment.cycle) {
         participantsToShow.add(participant);
       }
     }
 
-    // Apply search filter
     final filteredParticipants = participantsToShow.where((participant) {
       if (_searchQuery.isEmpty) return true;
       final query = _searchQuery.toLowerCase();
@@ -215,24 +230,36 @@ class _TimeTrackingScreenState extends State<TimeTrackingScreen> {
     BuildContext context,
     int bib,
     TimeLogsProvider timeLogsProvider,
-  ) {
-    timeLogsProvider.trackTime(
-      bib: bib,
-      segment: _selectedSegment,
-      trackerId: 'default',
-    );
+  ) async {
+    try {
+      await timeLogsProvider.trackTime(
+        bib: bib,
+        segment: _selectedSegment,
+      );
 
-    final hasCompleted = timeLogsProvider.hasCompletedAllSegments(bib);
-    final message = hasCompleted
-        ? 'Participant BIB #$bib has completed all segments!'
-        : 'Time recorded for BIB #$bib in the ${_getSegmentName(_selectedSegment)} segment';
+      final hasCompleted = timeLogsProvider.hasCompletedAllSegments(bib);
+      final message = hasCompleted
+          ? 'Participant BIB #$bib has completed all segments!'
+          : 'Time recorded for BIB #$bib in the ${_getSegmentName(_selectedSegment)} segment';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.accentColor,
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppTheme.accentColor,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().contains('permission_denied')
+                ? 'Permission denied: Check Firebase rules for time_logs'
+                : 'Failed to record time: $e',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   String _getSegmentName(Segment segment) {

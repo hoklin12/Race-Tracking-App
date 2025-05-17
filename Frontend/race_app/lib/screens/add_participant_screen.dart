@@ -16,6 +16,7 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
   String? _selectedGender;
+  bool _isSubmitting = false;
 
   final List<String> _genders = ['Male', 'Female', 'Other'];
 
@@ -55,7 +56,8 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
                   if (bib == null) {
                     return 'Please enter a valid number';
                   }
-                  final provider = Provider.of<ParticipantsProvider>(context, listen: false);
+                  final provider =
+                      Provider.of<ParticipantsProvider>(context, listen: false);
                   if (!provider.isBibNumberUnique(bib)) {
                     return 'BIB number must be unique';
                   }
@@ -115,8 +117,14 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _saveParticipant,
-                child: const Text('Add Participant'),
+                onPressed: _isSubmitting ? null : _saveParticipant,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Add Participant'),
               ),
             ],
           ),
@@ -125,26 +133,56 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
     );
   }
 
-  void _saveParticipant() {
+  Future<void> _saveParticipant() async {
     if (_formKey.currentState!.validate()) {
-      final provider = Provider.of<ParticipantsProvider>(context, listen: false);
-      
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      final provider =
+          Provider.of<ParticipantsProvider>(context, listen: false);
+
       final participant = Participant(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         bib: int.parse(_bibController.text),
         name: _nameController.text,
-        age: _ageController.text.isNotEmpty ? int.parse(_ageController.text) : null,
+        age: _ageController.text.isNotEmpty
+            ? int.parse(_ageController.text)
+            : null,
         gender: _selectedGender,
+        segmentTimes: null,
+        overallTime: null,
       );
-      
-      provider.addParticipant(participant);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Participant added successfully')),
-      );
-      
-      Navigator.pop(context);
+
+      try {
+        await provider.addParticipant(participant);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Participant added successfully')),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                e.toString().contains('permission_denied')
+                    ? 'Permission denied: Check Firebase rules'
+                    : e.toString().contains('is not a subtype')
+                        ? 'Data format error: Check Firebase data structure'
+                        : 'Failed to add participant: $e',
+              ),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
+      }
     }
   }
 }
-

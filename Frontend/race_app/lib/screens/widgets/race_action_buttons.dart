@@ -6,6 +6,7 @@ class RaceActionButtons extends StatelessWidget {
   final VoidCallback? onStart;
   final VoidCallback? onFinish;
   final VoidCallback? onPause;
+  final VoidCallback? onReset;
 
   const RaceActionButtons({
     super.key,
@@ -13,6 +14,7 @@ class RaceActionButtons extends StatelessWidget {
     this.onStart,
     this.onFinish,
     this.onPause,
+    this.onReset,
   });
 
   @override
@@ -33,7 +35,10 @@ class RaceActionButtons extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onStart,
             icon: const Icon(Icons.play_arrow),
-            label: const Text('Start Race'),
+            label: const Text(
+              'Start Race',
+              style: TextStyle(fontSize: 18),
+            ),
             style: buttonStyle.copyWith(
               backgroundColor: WidgetStateProperty.all(Colors.green),
             ),
@@ -44,22 +49,26 @@ class RaceActionButtons extends StatelessWidget {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 198,
+          Expanded(
             child: ElevatedButton.icon(
               onPressed: onPause,
               icon: const Icon(Icons.pause),
-              label: const Text('Pause Race'),
+              label: const Text(
+                'Pause Race',
+                style: TextStyle(fontSize: 18),
+              ),
               style: buttonStyle,
             ),
           ),
           const SizedBox(width: 8),
-          SizedBox(
-            width: 198,
+          Expanded(
             child: ElevatedButton.icon(
               onPressed: onFinish,
               icon: const Icon(Icons.stop),
-              label: const Text('Finish Race'),
+              label: const Text(
+                'Finish Race',
+                style: TextStyle(fontSize: 18),
+              ),
               style: buttonStyle.copyWith(
                 backgroundColor: WidgetStateProperty.all(Colors.red),
               ),
@@ -72,11 +81,15 @@ class RaceActionButtons extends StatelessWidget {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.check_circle),
-            label: const Text('Race Completed'),
-
-            style: buttonStyle
+            onPressed: onReset,
+            icon: const Icon(Icons.restart_alt),
+            label: const Text(
+              'Reset Race',
+              style: TextStyle(fontSize: 18),
+            ),
+            style: buttonStyle.copyWith(
+              backgroundColor: WidgetStateProperty.all(Colors.blue),
+            ),
           ),
         ),
       );

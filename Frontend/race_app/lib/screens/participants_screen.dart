@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:race_app/models/participant.dart';
@@ -16,11 +14,18 @@ class ParticipantsScreen extends StatefulWidget {
   State<ParticipantsScreen> createState() => _ParticipantsScreenState();
 }
 
-class _ParticipantsScreenState extends State<ParticipantsScreen> {
+class _ParticipantsScreenState extends State<ParticipantsScreen>
+    with AutomaticKeepAliveClientMixin {
   String _searchQuery = '';
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); 
+    final participantsProvider =
+        Provider.of<ParticipantsProvider>(context, listen: false);
     return Consumer<RaceProvider>(
       builder: (context, raceProvider, _) {
         final isRaceStarted = raceProvider.race.status != RaceStatus.notStarted;
@@ -58,19 +63,59 @@ class _ParticipantsScreenState extends State<ParticipantsScreen> {
                 ),
               ),
               Expanded(
-                child: Consumer<ParticipantsProvider>(
-                  builder: (context, provider, _) {
-                    final participants = provider.participants.where((participant) {
+                child: StreamBuilder<List<Participant>>(
+                  stream: participantsProvider.streamParticipants(),
+                  builder: (context, snapshot) {
+                    print(
+                        'StreamBuilder state: ${snapshot.connectionState}, data: ${snapshot.data?.length}, error: ${snapshot.error}');
+                    final provider = Provider.of<ParticipantsProvider>(context,
+                        listen: true);
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          snapshot.error
+                                  .toString()
+                                  .contains('permission_denied')
+                              ? 'Permission denied: Check Firebase rules'
+                              : snapshot.error
+                                      .toString()
+                                      .contains('FormatException')
+                                  ? 'Data format error: Invalid participant data in Firebase'
+                                  : 'Error loading participants: ${snapshot.error}',
+                        ),
+                      );
+                    }
+                    if (provider.error != null) {
+                      return Center(
+                        child: Text(
+                          provider.error!.contains('permission_denied')
+                              ? 'Permission denied: Check Firebase rules'
+                              : provider.error!.contains('FormatException')
+                                  ? 'Data format error: Invalid participant data in Firebase'
+                                  : provider.error!,
+                        ),
+                      );
+                    }
+                    final participants =
+                        (snapshot.hasData && snapshot.data!.isNotEmpty
+                                ? snapshot.data!
+                                : provider.participants)
+                            .where((participant) {
                       if (_searchQuery.isEmpty) return true;
-                      
                       final query = _searchQuery.toLowerCase();
                       return participant.name.toLowerCase().contains(query) ||
                           participant.bib.toString().contains(query);
                     }).toList();
 
+                    if (participants.isEmpty &&
+                        snapshot.connectionState == ConnectionState.waiting &&
+                        provider.participants.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
                     if (participants.isEmpty) {
                       return const Center(
-                        child: Text('No participants found'),
+                        child: Text(
+                            'No participants found. Add a participant to start.'),
                       );
                     }
 
@@ -81,10 +126,10 @@ class _ParticipantsScreenState extends State<ParticipantsScreen> {
                         return ParticipantListItem(
                           participant: participant,
                           onEdit: isRaceStarted
-                              ? () {} // Disable edit during race
+                              ? () {}
                               : () => _editParticipant(context, participant),
                           onDelete: isRaceStarted
-                              ? () {} // Disable delete during race
+                              ? () {}
                               : () => _deleteParticipant(context, participant),
                         );
                       },
@@ -94,9 +139,16 @@ class _ParticipantsScreenState extends State<ParticipantsScreen> {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: isRaceStarted ? null : () => _addParticipant(context),
-            child: const Icon(Icons.add),
+          floatingActionButton: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FloatingActionButton(
+                onPressed:
+                    isRaceStarted ? null : () => _addParticipant(context),
+                heroTag: 'add',
+                child: const Icon(Icons.add),
+              ),
+            ],
           ),
         );
       },
@@ -131,13 +183,32 @@ class _ParticipantsScreenState extends State<ParticipantsScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              Provider.of<ParticipantsProvider>(context, listen: false)
-                  .deleteParticipant(participant.id);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Participant deleted')),
-              );
+            onPressed: () async {
+              try {
+                await Provider.of<ParticipantsProvider>(context, listen: false)
+                    .deleteParticipant(participant.id);
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Participant deleted')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        e.toString().contains('permission_denied')
+                            ? 'Permission denied: Check Firebase rules'
+                            : e.toString().contains('FormatException')
+                                ? 'Data format error: Invalid participant data in Firebase'
+                                : 'Failed to delete participant: $e',
+                      ),
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "261848373856",
+    "firebase_url": "https://raceapp-d75e0-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "raceapp-d75e0",
+    "storage_bucket": "raceapp-d75e0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:261848373856:android:94b0bf0b071eb7e795c105",
+        "android_client_info": {
+          "package_name": "com.example.race_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDijmbFjRgdO6TMYnNA_wx6P2RuM_2kyQg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

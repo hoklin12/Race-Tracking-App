@@ -28,10 +28,10 @@ class RaceControlScreen extends StatelessWidget {
                 children: [
                   RaceStatusWidget(
                     key: ValueKey(race.status),
-                    // race: race,
-                    onStart: raceProvider.startRace,
-                    onFinish: raceProvider.finishRace,
-                    onPause: raceProvider.pauseRace,
+                    onStart: () => raceProvider.startRace(context),
+                    onPause: () => raceProvider.pauseRace(context),
+                    onFinish: () => raceProvider.finishRace(context),
+                    onReset: () => raceProvider.resetRace(context),
                   ),
                   const SizedBox(height: 16),
                   LeaderboardWidget(race: race),

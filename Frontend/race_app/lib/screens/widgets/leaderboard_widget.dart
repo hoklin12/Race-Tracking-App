@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:race_app/models/race.dart';
 import 'package:race_app/models/time_log.dart';
+import 'package:race_app/models/participant.dart';
+import 'package:race_app/providers/participants_provider.dart';
 import 'package:race_app/providers/race_provider.dart';
 import 'package:race_app/providers/time_logs_provider.dart';
 import 'package:race_app/screens/widgets/category_tab_button_widget.dart';
 import 'package:race_app/utils/format_utils.dart';
+import 'package:race_app/utils/leaderboard_export.dart'; 
 
 class LeaderboardWidget extends StatefulWidget {
   final Race race;
@@ -19,19 +22,25 @@ class LeaderboardWidget extends StatefulWidget {
   State<LeaderboardWidget> createState() => _LeaderboardWidgetState();
 }
 
-class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTickerProviderStateMixin {
+class _LeaderboardWidgetState extends State<LeaderboardWidget>
+    with SingleTickerProviderStateMixin {
   TabController? _tabController;
   final List<String> _categories = ['Swim', 'Cycle', 'Run'];
   int _selectedCategoryIndex = 0;
+
+  // Create a global key for the leaderboard to use for screenshots
+  final GlobalKey _leaderboardKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _categories.length, vsync: this);
     _tabController!.addListener(() {
-      setState(() {
-        _selectedCategoryIndex = _tabController!.index;
-      });
+      if (_tabController!.index != _selectedCategoryIndex) {
+        setState(() {
+          _selectedCategoryIndex = _tabController!.index;
+        });
+      }
     });
   }
 
@@ -53,14 +62,14 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTicker
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.emoji_events,
                   color: Colors.amber,
                 ),
-                SizedBox(width: 8),
-                Text(
+                const SizedBox(width: 8),
+                const Text(
                   'Leaderboard',
                   style: TextStyle(
                     fontSize: 18,
@@ -68,15 +77,79 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTicker
                     color: Colors.white,
                   ),
                 ),
+                const Spacer(),
+                // Add export buttons
+                _buildExportMenu(context),
               ],
             ),
             const SizedBox(height: 16),
             _buildCategoryTabs(),
             const SizedBox(height: 16),
-            _buildLeaderboardContent(),
+            RepaintBoundary(
+              key: _leaderboardKey,
+              child: Consumer<TimeLogsProvider>(
+                builder: (context, timeLogsProvider, _) {
+                  return _buildLeaderboardContent(context, timeLogsProvider);
+                },
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  // Add this method to create the export menu
+  Widget _buildExportMenu(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: Colors.white),
+      onSelected: (value) async {
+        final segment = Segment.values[_selectedCategoryIndex];
+
+        switch (value) {
+          case 'export_csv':
+            await LeaderboardExport.exportLeaderboardToCsv(
+              context,
+              segment: segment,
+            );
+            break;
+          case 'export_full_csv':
+            await LeaderboardExport.exportFullLeaderboardToCsv(
+              context,
+              segment: segment,
+            );
+            break;
+          case 'screenshot':
+            await LeaderboardExport.takeLeaderboardScreenshot(
+              context,
+              segment: segment,
+              leaderboardKey: _leaderboardKey,
+            );
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem<String>(
+          value: 'export_full_csv',
+          child: Row(
+            children: [
+              Icon(Icons.list),
+              SizedBox(width: 8),
+              Text('Export Full Leaderboard'),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'screenshot',
+          child: Row(
+            children: [
+              Icon(Icons.screenshot),
+              SizedBox(width: 8),
+              Text('Take Screenshot'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -87,7 +160,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTicker
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center, // Center the buttons as a group
+        mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
           _categories.length,
           (index) => CategoryTabButton(
@@ -120,95 +193,76 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTicker
     }
   }
 
-  Widget _buildLeaderboardContent() {
-    final raceProvider = Provider.of<RaceProvider>(context);
-    final timeLogsProvider = Provider.of<TimeLogsProvider>(context);
+  Widget _buildLeaderboardContent(
+      BuildContext context, TimeLogsProvider timeLogsProvider) {
+    // Rest of the method remains unchanged
+    final raceProvider = Provider.of<RaceProvider>(context, listen: false);
+    final participantsProvider =
+        Provider.of<ParticipantsProvider>(context, listen: false);
 
     if (raceProvider.race.startTime == null) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          const Spacer(flex: 1),
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0), // Shift 2nd place left
-            child: SizedBox(
-              width: 100,
-              child: _buildEmptyPositionItem(const Color.fromARGB(255, 199, 199, 199)), // 2nd
-            ),
-          ),
-          const Spacer(flex: 2),
-          SizedBox(
-            width: 100,
-            child: _buildEmptyPositionItem(Colors.amber), // 1st
-          ),
-          const Spacer(flex: 2),
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0), // Shift 3rd place right
-            child: SizedBox(
-              width: 100,
-              child: _buildEmptyPositionItem(Colors.brown), // 3rd
-            ),
-          ),
-          const Spacer(flex: 1),
-        ],
+      return _buildEmptyPodium();
+    }
+
+    if (timeLogsProvider.isLoading && timeLogsProvider.timeLogs.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (timeLogsProvider.error != null) {
+      return Center(
+        child: Text(
+          timeLogsProvider.error!,
+          style: const TextStyle(color: Colors.red),
+        ),
       );
     }
 
     final segment = Segment.values[_selectedCategoryIndex];
-    final timeLogs = timeLogsProvider.getTimeLogsForSegment(segment);
+    final timeLogs = timeLogsProvider.timeLogsBySegment(segment);
 
-    final participantsWithTimes = timeLogs.map((log) {
+    if (timeLogs.isEmpty) {
+      return _buildEmptyPodium();
+    }
+
+    // Compute leaderboard data directly without caching
+    final participantsWithTimes = <int, ParticipantLeaderData>{};
+
+    // Process all time logs for this segment
+    for (var log in timeLogs) {
+      if (log.deleted) continue; // Skip deleted logs
+
+      final participant = participantsProvider.getParticipantByBib(log.bib);
+      if (participant == null) continue; // Skip logs without a participant
+
+      // Calculate duration from race start
       final duration = log.timestamp.difference(raceProvider.race.startTime!);
-      return {
-        'bib': log.bib.toString(),
-        'duration': duration,
-      };
-    }).toList();
 
-    participantsWithTimes.sort((a, b) => (a['duration'] as Duration).compareTo(b['duration'] as Duration));
-
-    final displayCount = participantsWithTimes.length > 3 ? 3 : participantsWithTimes.length;
-
-    if (displayCount == 0) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          const Spacer(flex: 1),
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0), // Shift 2nd place left
-            child: SizedBox(
-              width: 100,
-              child: _buildEmptyPositionItem(Colors.grey), // 2nd
-            ),
-          ),
-          const Spacer(flex: 2),
-          SizedBox(
-            width: 100,
-            child: _buildEmptyPositionItem(Colors.amber), // 1st
-          ),
-          const Spacer(flex: 2),
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0), // Shift 3rd place right
-            child: SizedBox(
-              width: 100,
-              child: _buildEmptyPositionItem(Colors.brown), // 3rd
-            ),
-          ),
-          const Spacer(flex: 1),
-        ],
+      participantsWithTimes[log.bib] = ParticipantLeaderData(
+        participant: participant,
+        duration: duration,
       );
     }
 
-    // Reorder: 2nd (left), 1st (center), 3rd (right)
-    final reorderedParticipants = List<Map<String, dynamic>>.filled(3, {});
+    // Sort by duration (fastest first)
+    final leaders = participantsWithTimes.values.toList()
+      ..sort((a, b) => a.duration.compareTo(b.duration));
+
+    final displayCount = leaders.length > 3 ? 3 : leaders.length;
+
+    if (displayCount == 0) {
+      return _buildEmptyPodium();
+    }
+
+    // Create podium display with correct order: 2nd (left), 1st (center), 3rd (right)
+    final podiumData = List<ParticipantLeaderData?>.filled(3, null);
     if (displayCount >= 1) {
-      reorderedParticipants[1] = participantsWithTimes[0]; // 1st place in center
+      podiumData[1] = leaders[0]; // 1st place in center
     }
     if (displayCount >= 2) {
-      reorderedParticipants[0] = participantsWithTimes[1]; // 2nd place on left
+      podiumData[0] = leaders[1]; // 2nd place on left
     }
     if (displayCount >= 3) {
-      reorderedParticipants[2] = participantsWithTimes[2]; // 3rd place on right
+      podiumData[2] = leaders[2]; // 3rd place on right
     }
 
     return Row(
@@ -216,14 +270,14 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTicker
       children: [
         const Spacer(flex: 1),
         Padding(
-          padding: const EdgeInsets.only(left: 16.0), // Shift 2nd place left
+          padding: const EdgeInsets.only(left: 16.0),
           child: SizedBox(
             width: 100,
-            child: reorderedParticipants[0].isNotEmpty
+            child: podiumData[0] != null
                 ? _buildPositionItem(
                     2,
-                    reorderedParticipants[0]['bib'] as String,
-                    FormatUtils.formatDuration(reorderedParticipants[0]['duration'] as Duration),
+                    podiumData[0]!.participant.name,
+                    FormatUtils.formatDuration(podiumData[0]!.duration),
                     Colors.blue,
                   )
                 : _buildEmptyPositionItem(Colors.blue),
@@ -232,25 +286,25 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTicker
         const Spacer(flex: 2),
         SizedBox(
           width: 100,
-          child: reorderedParticipants[1].isNotEmpty
+          child: podiumData[1] != null
               ? _buildPositionItem(
                   1,
-                  reorderedParticipants[1]['bib'] as String,
-                  FormatUtils.formatDuration(reorderedParticipants[1]['duration'] as Duration),
+                  podiumData[1]!.participant.name,
+                  FormatUtils.formatDuration(podiumData[1]!.duration),
                   Colors.amber,
                 )
               : _buildEmptyPositionItem(Colors.amber),
         ),
         const Spacer(flex: 2),
         Padding(
-          padding: const EdgeInsets.only(right: 16.0), // Shift 3rd place right
+          padding: const EdgeInsets.only(right: 16.0),
           child: SizedBox(
             width: 100,
-            child: reorderedParticipants[2].isNotEmpty
+            child: podiumData[2] != null
                 ? _buildPositionItem(
                     3,
-                    reorderedParticipants[2]['bib'] as String,
-                    FormatUtils.formatDuration(reorderedParticipants[2]['duration'] as Duration),
+                    podiumData[2]!.participant.name,
+                    FormatUtils.formatDuration(podiumData[2]!.duration),
                     Colors.orange,
                   )
                 : _buildEmptyPositionItem(Colors.orange),
@@ -261,7 +315,38 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTicker
     );
   }
 
-  Widget _buildPositionItem(int position, String bib, String time, Color color) {
+  Widget _buildEmptyPodium() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        const Spacer(flex: 1),
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: SizedBox(
+            width: 100,
+            child: _buildEmptyPositionItem(Colors.blue),
+          ),
+        ),
+        const Spacer(flex: 2),
+        SizedBox(
+          width: 100,
+          child: _buildEmptyPositionItem(Colors.amber),
+        ),
+        const Spacer(flex: 2),
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: SizedBox(
+            width: 100,
+            child: _buildEmptyPositionItem(Colors.orange),
+          ),
+        ),
+        const Spacer(flex: 1),
+      ],
+    );
+  }
+
+  Widget _buildPositionItem(
+      int position, String name, String time, Color color) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -269,13 +354,17 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTicker
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.workspace_premium, color: color, size: 24),
-            Text(
-              bib,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                overflow: TextOverflow.ellipsis,
+            const SizedBox(width: 2),
+            Flexible(
+              child: Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                maxLines: 1,
               ),
             ),
           ],
@@ -302,10 +391,11 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> with SingleTicker
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.workspace_premium, color: color, size: 24),
+            const SizedBox(width: 2),
             const Text(
               "----",
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 overflow: TextOverflow.ellipsis,
